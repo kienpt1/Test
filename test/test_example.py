@@ -74,80 +74,6 @@ def extract_msg_time(details):
             return None
     return None
 
-# def process_data(raw_data, json_data):
-#     structured_data = []
-
-#     alm_keys = [
-#         "AMATI", "AMADR", "AMAFL", "AMAFR", "AMIPS", "AMIHU",
-#         "AMIAC", "AMIGN", "AMIAR", "AMIAL", "AMIAP",
-#         "AMIDC", "AMIDE", "AMIX1", "AMIX2", "AMIX3",
-#         "BTI0", "BHU", "BAV", "BAP", "BDV", "BDE"
-#     ]
-#     seq_keys = [
-#         "BTI0", "BTO0", "BHU0", "BAV", "BAP", "BAC0", "BAF", "BSE0",
-#         "BFA", "BFD", "BPW", "BDV", "BDC", "BDE", "BDR", "BFR",
-#         "BFL", "BPS", "BX1", "BX2", "BX3"
-#     ]
-
-#     for data in raw_data:
-#         id_value, status, _, value, start_time, _, end_time, details = data
-
-#         extracted_data = {
-#             "Start_Time": start_time,
-#             "End_Time": end_time,
-#         }
-
-#         eqid_match = re.search(r"EQID=(\d+)", details)
-#         msg_type_match = re.search(r"EQID=\d+;(ALM|SEQ);", details)
-
-#         extracted_data["EQID"] = eqid_match.group(1) if eqid_match else None
-#         extracted_data["Type"] = msg_type_match.group(1) if msg_type_match else "UNKNOWN"
-#         extracted_data["Location"] = read_json(json_data, extracted_data["EQID"])
-        
-#         keys = alm_keys if extracted_data["Type"] == "ALM" else seq_keys
-        
-#         for key in keys:
-#             match = re.search(rf"{key}[-:]?([0-9\.]+)", details)
-#             extracted_data[key] = match.group(1) if match else None
-
-#         alert_descriptions = []
-#         if extracted_data["Type"] == "ALM":
-#             # for key, desc in ALARM_LABELS.items():
-#             #     if extracted_data.get(key[:-1]) == key[-1]:
-#             #         alert_descriptions.append(desc)
-#             ac_status = extracted_data.get("AMIAC")
-#             gen_status = extracted_data.get("AMIGN")
-#             if ac_status == "1":
-#                 if gen_status == "1":
-#                     alert_descriptions.append("Mất điện AC - Máy phát đang chạy")
-#                 elif gen_status == "0":
-#                     alert_descriptions.append("⚠️ Mất điện AC - Máy phát KHÔNG chạy!")
-#                 else:
-#                     alert_descriptions.append("Mất điện AC")
-#             elif ac_status == "0":
-#                 if gen_status == "1":
-#                     alert_descriptions.append("Có điện AC nguồn điện của máy phát")
-#                 elif gen_status == "0":
-#                     alert_descriptions.append("✅ Có điện AC, không chạy máy phát")
-#                 else:
-#                     alert_descriptions.append("Có điện AC")
-
-
-#             # Các cảnh báo còn lại
-#             for key, desc in ALARM_LABELS.items():
-#                 if key.startswith("AMIAC") or key.startswith("AMIGN"):
-#                     continue  # đã xử lý riêng bên trên
-#                 if extracted_data.get(key[:-1]) == key[-1]:
-#                     alert_descriptions.append(desc)
-
-#         extracted_data["Alert_Description"] = ", ".join(alert_descriptions) if alert_descriptions else None
-#         extracted_data["Message_Time"] = extract_msg_time(details)
-#         structured_data.append(extracted_data)
-
-#     df = pd.DataFrame(structured_data)
-#     df = df.dropna(subset=["EQID", "Message_Time"])
-#     df = df.sort_values("Message_Time").groupby("EQID", as_index=False).tail(1)
-#     return alert_descriptions,df
 
 def process_data(raw_data, json_data):
     structured_data = []
@@ -276,11 +202,11 @@ def handle_exclude_whole_stations():
             st.success("✅ Đã xóa danh sách trạm bị loại.")
 
     if st.session_state.excluded_eqids:
-        st.info("🚫 Các trạm đã bị loại: " + ", ".join(st.session_state.excluded_eqids))
+        st.info("Các trạm đã bị loại: " + ", ".join(st.session_state.excluded_eqids))
 
 
 def handle_exclude_specific_alerts():
-    st.subheader("🚫 Loại bỏ một số cảnh báo cụ thể theo trạm")
+    st.subheader("Loại bỏ một số cảnh báo cụ thể theo trạm")
     EXCLUDED_ALERTS_FILE = "excluded_alerts_by_eqid.json"
 
     if "excluded_alerts_by_eqid" not in st.session_state:
@@ -433,48 +359,6 @@ ALARM_CODES = {
     "AMIPS1": "Cảnh báo chập nguồn sensor"
 }
 
-# # Thông tin các trạm
-# STATIONS = {
-#     "0000000027": {"location_name": "Trạm Vinh", "latitude": 18.690557, "longitude": 105.664598},
-#     "0000000019": {"location_name": "Trạm Đồng Lê", "latitude": 17.888687, "longitude": 106.023084},
-#     "0000005271": {"location_name": "Trần Đăng Ninh", "latitude": 21.017756, "longitude": 105.803908},
-#     "0000000023": {"location_name": "Trạm La Hai", "latitude": 13.37951, "longitude": 109.10423},
-#     "0000000081": {"location_name": "POP Quận 12", "latitude": 10.85441, "longitude": 106.60988},
-# }
-# def fetch_new_messages(cursor=None):
-#     from datetime import datetime
-#     import time
-
-#     now = datetime.now()
-#     current_second = int(time.time())
-#     state_index = current_second % 3
-
-#     fixed_eqid = "0000000027"  # Trạm giữ nguyên cảnh báo (Trạm Vinh)
-#     dynamic_eqids = ["0000000019", "0000005271", "0000000023", "0000000081"]
-
-#     # Cảnh báo cố định cho Trạm Vinh
-#     fixed_details = f"EQID={fixed_eqid};ALM;AMATI1;AMADR1;;{now.strftime('%H:%M:%S-%d/%m/%y')};"
-
-#     # Cảnh báo thay đổi theo trạng thái
-#     if state_index == 0:
-#         dynamic_alert = "AMIAC0;AMIGN0" 
-#     elif state_index == 1:
-#         dynamic_alert = "AMIAC1;AMIGN0"  
-#     else:
-#         dynamic_alert = "AMIAC1;AMIGN1"  
-#     dynamic_data = []
-#     for idx, eqid in enumerate(dynamic_eqids, start=1):
-#         details = f"EQID={eqid};ALM;{dynamic_alert};;{now.strftime('%H:%M:%S-%d/%m/%y')};"
-#         dynamic_data.append((idx, "OK", None, "1", now, None, now, details))
-
-#     # Dữ liệu cảnh báo cố định cho Trạm Vinh
-#     fixed_data = [
-#         (100, "OK", None, "1", now, None, now, fixed_details),
-#         (101, "OK", None, "1", now, None, now, fixed_details),
-#         (102, "OK", None, "1", now, None, now, fixed_details),
-#     ]
-
-#     return fixed_data + dynamic_data
 def main():
     st.title("📡 CVCS-TEC Message Monitor Version 0.1 Low Tech")
     st.caption("Live feed of messages from MySQL and EQID mapped locations.")

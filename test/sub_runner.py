@@ -1,2 +1,2 @@
 import subprocess 
-subprocess.run(["streamlit", "run", "/home/kienpt/test/test/test_example.py"], check=True)
+subprocess.run(["streamlit", "run", "/home/kien/Test/test/test_example.py"], check=True)

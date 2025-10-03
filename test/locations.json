@@ -1,203 +1,202 @@
-
 {
-    "0000000033": {
-      "location_name": "Trạm Đồng Hới",
-      "latitude": 17.470274,
-      "longitude": 106.599237
-    },
-    "0000005261": {
-      "location_name": "POP Tố Hữu",
-      "latitude": 16.03485,
-      "longitude": 108.22193
-    },
-    "0000001234": {
-      "location_name": "Trạm Sa Huỳnh",
-      "latitude": 14.66338,
-      "longitude": 109.06715
-    },
-    "0000000020": {
-      "location_name": "Trạm Tam Kỳ",
-      "latitude": 15.55821,
-      "longitude": 108.48321
-    },
-    "0000000603": {
-      "location_name": "Trạm Hương Phố",
-      "latitude": 18.170112,
-      "longitude": 105.707989
-    },
-    "0000000001": {
-      "location_name": "POP Thủ Đức",
-      "latitude": 10.86535,
-      "longitude": 106.74708
-    },
-    "0000005273": {
-      "location_name": "POP Sơn Tây",
-      "latitude": 21.129873,
-      "longitude": 105.506864
-    },
-    "0000005263": {
-      "location_name": "Trạm POP 2 Khánh Hòa",
-      "latitude": 12.2707,
-      "longitude": 109.19815
-    },
-    "0000000035": {
-      "location_name": "Trạm Nha Trang",
-      "latitude": 12.24826,
-      "longitude": 109.18514
-    },
-    "0000000010": {
-      "location_name": "Trạm Lăng Cô",
-      "latitude": 16.24125,
-      "longitude": 108.07819
-    },
-    "0000005262": {
-      "location_name": "Trạm POP 1 Khánh Hòa",
-      "latitude": 12.24093,
-      "longitude": 109.1849
-    },
-    "0000000622": {
-      "location_name": "Trạm Lê Văn Thịnh",
-      "latitude": 21.186187,
-      "longitude": 106.069866
-    },
-    "0000000623": {
-      "location_name": "Kép",
-      "latitude": 21.417684,
-      "longitude": 106.293233
-    },
-    "0000000026": {
-      "location_name": "Trạm Mương Mán",
-      "latitude": 10.9744,
-      "longitude": 107.99713
-    },
-    "0000000625": {
-      "location_name": "Quảng Ngãi",
-      "latitude": 15.123875,
-      "longitude": 108.811727
-    },
-    "0000000030": {
-      "location_name": "Trạm Đông Hà",
-      "latitude": 16.811342,
-      "longitude": 107.111141
-    },
-    "0000000032": {
-      "location_name": "Trạm Phù Cát",
-      "latitude": 14.00073,
-      "longitude": 109.05719
-    },
-    "0000000025": {
-      "location_name": "Trạm Gia Ray",
-      "latitude": 10.92991,
-      "longitude": 107.41647
-    },
-    "0000000082": {
-      "location_name": "POP Quận 10",
-      "latitude": 10.7644835,
-      "longitude": 106.66715006
-    },
-    "0000000620": {
-      "location_name": "Hải Dương",
-      "latitude": 20.94561,
-      "longitude": 106.330203
-    },
-    "0000000011": {
-      "location_name": "Trạm Mộc Bài",
-      "latitude": 11.08305,
-      "longitude": 106.23221
-    },
-    "0000000624": {
-      "location_name": "Trạm Phổ Yên",
-      "latitude": 21.411009,
-      "longitude": 105.876753
-    },
-    "0000000002": {
-      "location_name": "POP Dĩ An",
-      "latitude": 10.8893071,
-      "longitude": 106.78078007
-    },
-    "0000000021": {
-      "location_name": "Trạm Đại Lãnh",
-      "latitude": 12.8362,
-      "longitude": 109.36315
-    },
-    "0000000605": {
-      "location_name": "Trạm Nam Định",
-      "latitude": 20.421628,
-      "longitude": 106.164775
-    },
-    "0000000018": {
-      "location_name": "Trạm Sông Mao",
-      "latitude": 11.2552,
-      "longitude": 108.50444
-    },
-    "0000000027": {
-      "location_name": "Trạm Vinh",
-      "latitude": 18.690557,
-      "longitude": 105.664598
-    },
-    "0000000019": {
-      "location_name": "Trạm Đồng Lê",
-      "latitude": 17.888687,
-      "longitude": 106.023084
-    },
-    "0000005271": {
-      "location_name": "Trần Đăng Ninh",
-      "latitude": 21.017756,
-      "longitude": 105.803908
-    },
-    "0000000023": {
-      "location_name": "Trạm La Hai",
-      "latitude": 13.37951,
-      "longitude": 109.10423
-    },
-    "0000000081": {
-      "location_name": "POP Quận 12",
-      "latitude": 10.85440992,
-      "longitude": 106.60987749
-    },
-    "0000000621": {
-      "location_name": "Đồng Đăng",
-      "latitude": 21.943149,
-      "longitude": 106.698416
-    },
-    "0000000016": {
-      "location_name": "Trạm Tháp Chàm",
-      "latitude": 11.59576,
-      "longitude": 108.95018
-    },
-    "0000000014": {
-      "location_name": "Trạm Cầu Giát",
-      "latitude": 19.31089,
-      "longitude": 105.72396
-    },
-    "0000005272": {
-      "location_name": "Tiên Sơn",
-      "latitude": 21.132444,
-      "longitude": 105.994001
-    },
-    "0000000015": {
-      "location_name": "Trạm Huế",
-      "latitude": 16.45385,
-      "longitude": 107.56419
-    },
-    "0000000022": {
-      "location_name": "Trạm Thanh Hoá",
-      "latitude": 19.8199,
-      "longitude": 105.76884
-    },
-    "0000000008": {
-      "location_name": "POP Thủ Dầu Một",
-      "latitude": 10.99198842,
-      "longitude": 106.66820725
-    },
-    "0000000083": {
-      "location_name": "POP Thịnh Vượng HCM105",
-      "latitude": 10.78854861,
-      "longitude": 106.7708491
-    },
-    "0000080002": {
-      "location_name": "POP Lao Bảo",
-      "latitude": 16.61855800,
-      "longitude": 106.59357600
-    }
+"0000000621": {
+"location_name": "Đồng Đăng",
+"latitude": 21.943149,
+"longitude": 106.698416
+},
+"0000000623": {
+"location_name": "Kép",
+"latitude": 21.417684,
+"longitude": 106.293233
+},
+"0000000624": {
+"location_name": "Trạm Phổ Yên",
+"latitude": 21.411009,
+"longitude": 105.876753
+},
+"0000000622": {
+"location_name": "Trạm Lê Văn Thịnh",
+"latitude": 21.186187,
+"longitude": 106.069866
+},
+"0000005272": {
+"location_name": "Tiên Sơn",
+"latitude": 21.132444,
+"longitude": 105.994001
+},
+"0000005271": {
+"location_name": "Trần Đăng Ninh",
+"latitude": 21.017756,
+"longitude": 105.803908
+},
+"0000005273": {
+"location_name": "POP Sơn Tây",
+"latitude": 21.129873,
+"longitude": 105.506864
+},
+"0000000620": {
+"location_name": "Hải Dương",
+"latitude": 20.94561,
+"longitude": 106.330203
+},
+"0000000605": {
+"location_name": "Trạm Nam Định",
+"latitude": 20.421628,
+"longitude": 106.164775
+},
+"0000000022": {
+"location_name": "Trạm Thanh Hoá",
+"latitude": 19.8199,
+"longitude": 105.76884
+},
+"0000000014": {
+"location_name": "Trạm Cầu Giát",
+"latitude": 19.31089,
+"longitude": 105.72396
+},
+"0000000027": {
+"location_name": "Trạm Vinh",
+"latitude": 18.690557,
+"longitude": 105.664598
+},
+"0000000603": {
+"location_name": "Trạm Hương Phố",
+"latitude": 18.170112,
+"longitude": 105.707989
+},
+"0000000019": {
+"location_name": "Trạm Đồng Lê",
+"latitude": 17.888687,
+"longitude": 106.023084
+},
+"0000000033": {
+"location_name": "Trạm Đồng Hới",
+"latitude": 17.470274,
+"longitude": 106.599237
+},
+"0000080002": {
+"location_name": "POP Lao Bảo",
+"latitude": 16.618558,
+"longitude": 106.593576
+},
+"0000000030": {
+"location_name": "Trạm Đông Hà",
+"latitude": 16.811342,
+"longitude": 107.111141
+},
+"0000000015": {
+"location_name": "Trạm Huế",
+"latitude": 16.45385,
+"longitude": 107.56419
+},
+"0000000010": {
+"location_name": "Trạm Lăng Cô",
+"latitude": 16.24125,
+"longitude": 108.07819
+},
+"0000005261": {
+"location_name": "POP Tố Hữu",
+"latitude": 16.03485,
+"longitude": 108.22193
+},
+"0000000020": {
+"location_name": "Trạm Tam Kỳ",
+"latitude": 15.55821,
+"longitude": 108.48321
+},
+"0000000625": {
+"location_name": "Quảng Ngãi",
+"latitude": 15.123875,
+"longitude": 108.811727
+},
+"0000001234": {
+"location_name": "Trạm Sa Huỳnh",
+"latitude": 14.66338,
+"longitude": 109.06715
+},
+"0000000032": {
+"location_name": "Trạm Phù Cát",
+"latitude": 14.00073,
+"longitude": 109.05719
+},
+"0000000023": {
+"location_name": "Trạm La Hai",
+"latitude": 13.37951,
+"longitude": 109.10423
+},
+"0000000021": {
+"location_name": "Trạm Đại Lãnh",
+"latitude": 12.8362,
+"longitude": 109.36315
+},
+"0000005262": {
+"location_name": "Trạm POP 1 Khánh Hòa",
+"latitude": 12.24093,
+"longitude": 109.1849
+},
+"0000005263": {
+"location_name": "Trạm POP 2 Khánh Hòa",
+"latitude": 12.2707,
+"longitude": 109.19815
+},
+"0000000035": {
+"location_name": "Trạm Nha Trang",
+"latitude": 12.24826,
+"longitude": 109.18514
+},
+"0000000016": {
+"location_name": "Trạm Tháp Chàm",
+"latitude": 11.59576,
+"longitude": 108.95018
+},
+"0000000018": {
+"location_name": "Trạm Sông Mao",
+"latitude": 11.2552,
+"longitude": 108.50444
+},
+"0000000026": {
+"location_name": "Trạm Mương Mán",
+"latitude": 10.9744,
+"longitude": 107.99713
+},
+"0000000025": {
+"location_name": "Trạm Gia Ray",
+"latitude": 10.92991,
+"longitude": 107.41647
+},
+"0000000002": {
+"location_name": "POP Dĩ An",
+"latitude": 10.8893071,
+"longitude": 106.78078007
+},
+"0000000001": {
+"location_name": "POP Thủ Đức",
+"latitude": 10.86535,
+"longitude": 106.74708
+},
+"0000000081": {
+"location_name": "POP Quận 12",
+"latitude": 10.85440992,
+"longitude": 106.60987749
+},
+"0000000008": {
+"location_name": "POP Thủ Dầu Một",
+"latitude": 10.99198842,
+"longitude": 106.66820725
+},
+"0000000083": {
+"location_name": "POP Thịnh Vượng HCM105",
+"latitude": 10.78854861,
+"longitude": 106.7708491
+},
+"0000000082": {
+"location_name": "POP Quận 10",
+"latitude": 10.7644835,
+"longitude": 106.66715006
+},
+"0000000011": {
+"location_name": "Trạm Mộc Bài",
+"latitude": 11.08305,
+"longitude": 106.23221
+}
 }

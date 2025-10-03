@@ -1,15 +1,16 @@
 import os
-import gc
 import re
 import json
 import time
+import logging 
 import pymysql
 import pandas as pd
 import requests as rqs
 import streamlit as st
 from datetime import datetime
+import pickle
 from streamlit_autorefresh import st_autorefresh
-
+logging.getLogger("streamlit.runtime.scriptrunner.script_runner").setLevel(logging.ERROR)
 # Webhook URL
 url = "http://localhost:4587/prtg-webhook-electric-me"
 
@@ -42,9 +43,27 @@ def load_json(path):
 def read_json(data, compare):
     return data.get(str(compare), None)
 
+STATE_FILE = "alert_state.json"
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_state(data):
+    # Convert datetime to string for JSON serializing
+    serializable_data = {
+        key: value if isinstance(value, str) else value.strftime("%Y-%m-%d %H:%M:%S")
+        for key, value in data.items()
+    }
+    with open(STATE_FILE, "w") as f:
+        json.dump(serializable_data, f, indent=2)
+
 def fetch_new_messages(cursor):
     cursor.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 100;")
     return cursor.fetchall()
+
 
 def extract_msg_time(details):
     match = re.search(r";(\d{2}:\d{2}:\d{2}-\d{2}/\d{2}/\d{2});", details)
@@ -55,7 +74,13 @@ def extract_msg_time(details):
             return None
     return None
 
-def process_data(raw_data, json_data):
+
+def process_data(raw_data, json_data, json_path):
+
+    ####################
+    json_data, pool_bitch = load_location_data(json_path)
+    ####################
+    
     structured_data = []
 
     alm_keys = [
@@ -69,10 +94,19 @@ def process_data(raw_data, json_data):
         "BFA", "BFD", "BPW", "BDV", "BDC", "BDE", "BDR", "BFR",
         "BFL", "BPS", "BX1", "BX2", "BX3"
     ]
-
+    seq_descriptions = [ 
+        "Nhiệt độ trong trạm", "Nhiệt độ ngoài", "Độ ẩm môi trường (%)", "Điện áp AC (V)", 
+        "Tần số (Hz)", "Dòng điện AC (A)", "cos phi", "Điện đang sử dụng (Điện lưới/Máy phát)",
+        "Quạt AC (Bật/Tắt)", "Quạt DC (Bật/Tắt)", "Công suất tiêu thụ AC (Wh)", 
+        "Điện áp tổ acquy", "Dòng điện DC (A)", "Điện áp lệch giữa 2 tổ acquy", 
+        "Mở cửa (Có/Không)", "Cháy/Khói (Có/Không)", "Ngập nước (Có/Không)",
+        "CB nguồn cấp cho sensor (BT/Chập nguồn)", "", "", ""
+    ]
+    results = [] 
+    Last_love = []
     for data in raw_data:
         id_value, status, _, value, start_time, _, end_time, details = data
-
+        #print(details)
         extracted_data = {
             "Start_Time": start_time,
             "End_Time": end_time,
@@ -80,54 +114,56 @@ def process_data(raw_data, json_data):
 
         eqid_match = re.search(r"EQID=(\d+)", details)
         msg_type_match = re.search(r"EQID=\d+;(ALM|SEQ);", details)
-
+        temperature = re.search(r"BTI0(\d+\.\d+)", details)
         extracted_data["EQID"] = eqid_match.group(1) if eqid_match else None
         extracted_data["Type"] = msg_type_match.group(1) if msg_type_match else "UNKNOWN"
         extracted_data["Location"] = read_json(json_data, extracted_data["EQID"])
-        
+        extracted_data["Value_Temp"] = float(temperature.group(1)) if temperature else None
+        #results.append(f"{extracted_data['Location']}:{extracted_data['Value_Temp']}")
+        results.append({
+                    "Location": extracted_data["Location"],
+                    "Value_Temp": extracted_data["Value_Temp"]
+                })
         keys = alm_keys if extracted_data["Type"] == "ALM" else seq_keys
-        
-        for key in keys:
-            match = re.search(rf"{key}[-:]?([0-9\.]+)", details)
-            extracted_data[key] = match.group(1) if match else None
+        descriptions = None
+        if extracted_data["Type"] == "SEQ":
+            descriptions = seq_descriptions
 
+        # Extract key values
+        for i, key in enumerate(keys):
+            match = re.search(rf"{key}[-:]?([0-9\.]+)", details)
+            value = match.group(1) if match else None
+            if extracted_data["Type"] == "SEQ" and descriptions and i < len(descriptions):
+                desc = descriptions[i]
+                extracted_data[desc] = value
+            else:
+                extracted_data[key] = value
+
+        # Process alarms
         alert_descriptions = []
         if extracted_data["Type"] == "ALM":
-            # for key, desc in ALARM_LABELS.items():
-            #     if extracted_data.get(key[:-1]) == key[-1]:
-            #         alert_descriptions.append(desc)
             ac_status = extracted_data.get("AMIAC")
             gen_status = extracted_data.get("AMIGN")
 
-            # if ac_status == "1":
-            #     if gen_status == "1":
-            #         alert_descriptions.append("Mất điện AC - Máy phát đang chạy")
-            #     elif gen_status == "0":
-            #         alert_descriptions.append("⚠️ Mất điện AC - Máy phát KHÔNG chạy!")
-            #     else:
-            #         alert_descriptions.append("Mất điện AC")
-            # elif ac_status == "0":
-            #     alert_descriptions.append("Có điện AC")
             if ac_status == "1":
                 if gen_status == "1":
                     alert_descriptions.append("Mất điện AC - Máy phát đang chạy")
                 elif gen_status == "0":
-                    alert_descriptions.append("⚠️ Mất điện AC - Máy phát KHÔNG chạy!")
+                    alert_descriptions.append("Mất điện AC - Máy phát KHÔNG chạy!")
                 else:
                     alert_descriptions.append("Mất điện AC")
+
             elif ac_status == "0":
                 if gen_status == "1":
-                    alert_descriptions.append("Có điện AC đang sử dụng điện của máy phát")
+                    alert_descriptions.append("Có điện AC nguồn điện của phát")
                 elif gen_status == "0":
                     alert_descriptions.append("Có điện AC, không chạy máy phát")
                 else:
                     alert_descriptions.append("Có điện AC")
 
-
-            # Các cảnh báo còn lại
             for key, desc in ALARM_LABELS.items():
                 if key.startswith("AMIAC") or key.startswith("AMIGN"):
-                    continue  # đã xử lý riêng bên trên
+                    continue
                 if extracted_data.get(key[:-1]) == key[-1]:
                     alert_descriptions.append(desc)
 
@@ -135,20 +171,67 @@ def process_data(raw_data, json_data):
         extracted_data["Message_Time"] = extract_msg_time(details)
         structured_data.append(extracted_data)
 
+    # for r in results:
+    #     if r['Location'] not in results:
+    #          if len(Last_love)==42:
+    #              #print("checkmate")
+    #              break
+    #          else:  
+    #             Last_love.append(r) 
+
+    # space_clone = []
+    # for j in pool_bitch: 
+    #     for i in Last_love:
+    #         if str(j) == str(i['Location']):
+    #             clone = {j:i['Value_Temp']}
+    #     if clone in space_clone:
+    #         clone.replace(clone for i in range(len(space_clone)))
+    #     else: 
+    #         space_clone.append(clone)
+    Last_love = []
+    for r in results:
+        if r['Location'] not in [item['Location'] for item in Last_love]:
+            if len(Last_love) == 42:
+                break
+            else:
+                Last_love.append(r)
+
+    space_clone = []
+    for j in pool_bitch:
+        for i in Last_love:
+            if str(j) == str(i['Location']):
+                clone = {j: i['Value_Temp']}
+                break  
+        else:
+            continue  
+        
+        existing = next((item for item in space_clone if j in item), None)
+        if existing:
+            existing[j] = i['Value_Temp']  
+        else:
+            space_clone.append(clone)
+
+
+    # for i in space_clone:
+    #     print(i)
+    
+
     df = pd.DataFrame(structured_data)
     df = df.dropna(subset=["EQID", "Message_Time"])
     df = df.sort_values("Message_Time").groupby("EQID", as_index=False).tail(1)
+    return alert_descriptions, df , space_clone
 
-    print(f"GC Collected: {gc.collect()}")
-    return alert_descriptions,df
-
-def load_json_data():
-    json_path = "locations.json"
+def load_location_data(json_path):
+    pool_bitch=[]
     json_data_cp = load_json(json_path)
-    return {eqid: info["location_name"] for eqid, info in json_data_cp.items()}
+    for eqid, info in json_data_cp.items(): 
+        check_mate = info["location_name"]
+        pool_bitch.append(check_mate)
+    
+    # # location_name= info
+    return {eqid: info["location_name"] for eqid, info in json_data_cp.items()}, pool_bitch
 
-
-def handle_exclude_eqids():
+def handle_exclude_whole_stations():
     st.subheader("❌ Loại bỏ toàn bộ cảnh báo của trạm")
     EXCLUDE_FILE = "excluded_eqids.json"
 
@@ -172,17 +255,20 @@ def handle_exclude_eqids():
             st.session_state.excluded_eqids.add(exclude_eqid_input.strip())
             with open(EXCLUDE_FILE, "w", encoding="utf-8") as f:
                 json.dump(list(st.session_state.excluded_eqids), f, indent=2)
-            st.success(f"✅ Đã loại trạm có EQID = {exclude_eqid_input.strip()}")
+            st.success(f"✅ Đã loại trạm EQID = {exclude_eqid_input.strip()}")
 
         if returned:
             st.session_state.excluded_eqids = set()
             with open(EXCLUDE_FILE, "w", encoding="utf-8") as f:
                 json.dump([], f, indent=2)
-            st.success("✅ Đã xóa danh sách trạm không bắn cảnh báo.")
+            st.success("✅ Đã xóa danh sách trạm bị loại.")
+
+    if st.session_state.excluded_eqids:
+        st.info("Các trạm đã bị loại: " + " , ".join(st.session_state.excluded_eqids))
 
 
-def handle_exclude_alerts():
-    st.subheader("🚫 Loại bỏ một số cảnh báo cụ thể theo trạm")
+def handle_exclude_specific_alerts():
+    st.subheader("Loại bỏ một số cảnh báo cụ thể theo trạm")
     EXCLUDED_ALERTS_FILE = "excluded_alerts_by_eqid.json"
 
     if "excluded_alerts_by_eqid" not in st.session_state:
@@ -192,7 +278,7 @@ def handle_exclude_alerts():
                     content = f.read().strip()
                     st.session_state.excluded_alerts_by_eqid = json.loads(content) if content else {}
             except json.JSONDecodeError:
-                st.warning("⚠️ Lỗi định dạng trong excluded_alerts_by_eqid.json. Khởi tạo lại.")
+                st.warning("⚠️ Lỗi định dạng JSON. Khởi tạo lại.")
                 st.session_state.excluded_alerts_by_eqid = {}
         else:
             st.session_state.excluded_alerts_by_eqid = {}
@@ -222,81 +308,104 @@ def handle_exclude_alerts():
             st.session_state.excluded_alerts_by_eqid = {}
             with open(EXCLUDED_ALERTS_FILE, "w", encoding="utf-8") as f:
                 json.dump({}, f, indent=2, ensure_ascii=False)
-            st.success("✅ Đã xóa toàn bộ cảnh báo bị loại theo trạm.")
+            st.success("✅ Đã xóa toàn bộ cảnh báo bị loại.")
 
-
-def display_excluded_info():
-    if st.session_state.get("excluded_eqids"):
-        st.info("🚫 Các trạm đã bị loại: " + ", ".join(st.session_state.excluded_eqids))
-    if st.session_state.get("excluded_alerts_by_eqid"):
+    if st.session_state.excluded_alerts_by_eqid:
         st.info("📌 Cảnh báo bị loại theo trạm:")
         for eqid, alerts in st.session_state.excluded_alerts_by_eqid.items():
             st.write(f"• **{eqid}**: {', '.join(alerts)}")
 
 
-def process_and_send_alerts(json_data):
+def handle_alert_processing(json_data,json_path):
     try:
         connection = pymysql.connect(**db_config)
         cursor = connection.cursor()
 
         st.write("Fetching new messages...")
         raw_messages = fetch_new_messages(cursor)
-        alert_descriptions, df = process_data(raw_messages, json_data)
+        alert_descriptions, df, space_clone = process_data(raw_messages, json_data, json_path)
 
-        st.session_state.setdefault("sent_alerts", {})
-        st.session_state.setdefault("active_alerts", {})
+        # Process for table Onoc 
+        flattened = []
+        for d in space_clone:
+            for k,v in d.items():
+                flattened.append({"Location": k, "Deg": format(v, ".1f") })
+
+        df2 = pd.DataFrame(flattened)
+        st.table(df2) 
+        # Load state on first run
+        #active_alerts: danh sách cảnh báo hiện tại đang hiển thị
+        #alarm_seen_at: thời gian cảnh báo đó được thấy lần đầu
+        if 'sent_alerts' not in st.session_state:
+            st.session_state.sent_alerts = {
+                k: datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
+                for k, v in load_state().items()
+            }
+        if 'active_alerts' not in st.session_state:
+            st.session_state.active_alerts = {}
+        if 'alarm_seen_at' not in st.session_state:
+            st.session_state.alarm_seen_at = {}
 
         now = datetime.now()
         current_keys = set(f"{row['EQID']}_{row['Alert_Description']}" for _, row in df.iterrows())
 
+        # Clean up old alerts
         to_remove = [key for key in st.session_state.active_alerts if key not in current_keys]
         for key in to_remove:
-            del st.session_state.active_alerts[key]
-            print(f"🧹 Đã xóa khỏi bộ nhớ cảnh báo không còn tồn tại: {key}")
+            st.session_state.active_alerts.pop(key, None)
+            st.session_state.sent_alerts.pop(key, None)
+            st.session_state.alarm_seen_at.pop(key, None)
+            print(f"🧹 Xoá cảnh báo: {key}")
 
         for _, row in df.iterrows():
             eqid = row["EQID"]
-            if eqid in st.session_state.excluded_eqids:
-                continue
-            if row["Type"] != "ALM":
-                continue
-
             desc = row["Alert_Description"]
             loc = row["Location"]
-            msg_time = row["Message_Time"].replace(microsecond=0)
-            time_key = f"{eqid}_{desc}_{msg_time.strftime('%Y-%m-%d %H:%M:%S')}"
+            msg_time = row["Message_Time"]
+            key = f"{eqid}_{desc}"
 
-            if desc in st.session_state.excluded_alerts_by_eqid.get(eqid, []):
+            if row["Type"] != "ALM" or eqid in st.session_state.excluded_eqids:
+                continue
+
+            excluded = st.session_state.excluded_alerts_by_eqid.get(eqid, [])
+            if desc in excluded:
                 print(f"⏹️ Bỏ qua cảnh báo '{desc}' tại EQID {eqid}")
                 continue
 
-            last_sent = st.session_state.sent_alerts.get(time_key)
-            wait_seconds = 600 if "điện AC" in (desc or "").lower() else 120
+            if key not in st.session_state.alarm_seen_at:
+                st.session_state.alarm_seen_at[key] = now
+                print(f"👀 Lần đầu thấy cảnh báo {key}")
+                continue
 
-            if last_sent is None or (now - last_sent).total_seconds() > wait_seconds:
-                json_payload = {
-                    "status": "ok",
-                    "Location": loc or "",
-                    "EQID": eqid,
-                    "Alert_Description": desc or "",
-                    "datetime": msg_time.strftime("%Y-%m-%d %H:%M:%S")
-                }
-                print(json_payload)
-                try:
-                    response = rqs.post(url, json=json_payload, timeout=5)
-                    if response.status_code == 200:
-                        st.session_state.sent_alerts[time_key] = now
-                        st.session_state.active_alerts[time_key] = True
-                        print(f"✅ Gửi cảnh báo: {json_payload}")
-                    else:
-                        print(f"❌ Lỗi gửi cảnh báo: {response.status_code}")
-                except Exception as e:
-                    print(f"❌ Lỗi kết nối webhook: {e}")
-            else:
-                print(f"⏳ Đã gửi cảnh báo gần đây: {time_key}")
-                st.session_state.active_alerts[time_key] = True
+            last_sent = st.session_state.sent_alerts.get(key)
+            wait_seconds = 600 if "điện ac" in desc.lower() else 120
+            print("tinnnnnnnnnnnnnnnnnnn",desc.lower())
+            print("tinnnnnnnnnnnnnnnnnnnn",wait_seconds)
+            if last_sent and (now - last_sent).total_seconds() < wait_seconds:
+                st.session_state.active_alerts[key] = True
+                continue
+            print(f"thời gian gửi : {last_sent}")
+            payload = {
+                "status": "ok",
+                "Location": loc or "",
+                "EQID": eqid,
+                "Alert_Description": desc or "",
+                "datetime": msg_time.strftime("%Y-%m-%d %H:%M:%S")
+            }
 
-            time.sleep(1)
+            try:
+                response = rqs.post(url, json=payload, timeout=5)
+                if response.status_code == 200:
+                    st.session_state.sent_alerts[key] = now
+                    st.session_state.active_alerts[key] = True
+                    save_state(st.session_state.sent_alerts)
+                    print(f"📤 Đã gửi cảnh báo: {payload}")
+                else:
+                    print(f"❌ Lỗi gửi cảnh báo: {response.status_code}")
+            except Exception as e:
+                print(f"⚠️ Lỗi kết nối webhook: {e}")
+
+            time.sleep(0.5)
 
         st.dataframe(df, use_container_width=True)
 
@@ -308,23 +417,33 @@ def process_and_send_alerts(json_data):
             connection.close()
         except:
             pass
+# test
+ALARM_CODES = {
+    "AMABD1": "Cảnh báo đột nhập",
+    "AMADR1": "Cảnh báo mở cửa",
+    "AMAFL1": "Cảnh báo: ngập nước trong trạm",
+    "AMAFR1": "Cảnh báo có cháy khói trong trạm",
+    "AMATI1": "Cảnh báo nhiệt độ cao",
+    "AMIAR1": "Cảnh báo: có sự cố điều hòa",
+    "AMIHU1": "Cảnh báo độ ẩm trạm cao",
+    "AMIPS1": "Cảnh báo chập nguồn sensor"
+}
 
 def main():
     st.title("📡 CVCS-TEC Message Monitor Version 0.1 Low Tech")
     st.caption("Live feed of messages from MySQL and EQID mapped locations.")
 
-    json_data = load_json_data()
+    if 'alarm_seen_at' not in st.session_state:
+        st.session_state.alarm_seen_at = {}
 
-    refresh_interval = st.slider("Refresh Interval (seconds)", 1, 10, 3)
-    st_autorefresh(interval=refresh_interval * 1000, key="data_refresh")
+    json_path = "locations.json"
+    json_data, pool_bitch = load_location_data(json_path)
 
-    handle_exclude_eqids()
-    handle_exclude_alerts()
-    display_excluded_info()
-    process_and_send_alerts(json_data)
+    st_autorefresh(interval=5 * 1000, key="data_refresh")
 
+    handle_exclude_whole_stations()
+    handle_exclude_specific_alerts()
+    handle_alert_processing(json_data,json_path)
 
 if __name__ == "__main__":
     main()
-
-
